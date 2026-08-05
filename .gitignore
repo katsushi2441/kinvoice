@@ -1,0 +1,7 @@
+public/kinvoice_config.php
+# 領収書の台帳には顧客名・メール・金額が入る。絶対にコミットしない。
+public/kinvoice_data/*
+!public/kinvoice_data/.htaccess
+outputs/
+*.pyc
+__pycache__/

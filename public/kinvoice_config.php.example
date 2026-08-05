@@ -1,0 +1,7 @@
+<?php
+// kinvoice の実行時設定。実物はリポジトリに入れない（deploy.sh が配置する）。
+// 適格請求書発行事業者の登録番号。取得したらここに入れると領収書に印字される。
+// 未取得のまま架空の番号を入れないこと。
+// define('KINV_INVOICE_REG_NO', 'T1234567890123');
+// 送信元メールアドレス（既定は tokusho.php の info@exdirect.net）
+// define('KINV_MAIL_FROM', 'info@exdirect.net');
