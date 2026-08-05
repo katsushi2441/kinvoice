@@ -324,9 +324,9 @@ footer.site{text-align:center;color:var(--abyss-soft);font-size:12.5px;padding:3
         </div>
         <div>
           <label for="note">但し書き</label>
-          <input type="text" id="note" name="note" maxlength="60" placeholder="例：システム開発費"
-                 value="<?php echo h(isset($_POST['note']) ? $_POST['note'] : 'システム開発費'); ?>">
-          <p class="hint">「但し　◯◯　として」と印字されます。</p>
+          <input type="text" id="note" name="note" maxlength="60" placeholder="空欄なら「お品代」"
+                 value="<?php echo h(isset($_POST['note']) ? $_POST['note'] : ''); ?>">
+          <p class="hint">「但し　◯◯　として」と印字されます。空欄のままなら「お品代」になります。</p>
         </div>
       </div>
       <button type="submit" name="issue" value="1" class="btn" style="margin-top:20px">
