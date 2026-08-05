@@ -5,6 +5,8 @@
 $tmp = sys_get_temp_dir() . '/kinvoice-check-' . getmypid();
 @mkdir($tmp, 0700, true);
 define('KINV_DATA_DIR', $tmp);
+// 本番の設定を読ませない。テストは自前の値だけで動く。
+define('KINV_CONFIG_FILE', '');
 // 設定はテスト用の値で固定する。lib より先に define すること（先勝ち）。
 define('KINV_ADMIN', 'test_admin');
 define('KINV_NAME', 'テスト発行元株式会社');
@@ -101,6 +103,15 @@ check('金額が入っている', strpos($pdf, '110,000') !== false, true);
 check('発行元が入っている', strpos($pdf, kinv_pdf_hex('テスト発行元株式会社')) !== false, true);
 check('登録番号が入っている', strpos($pdf, 'T0000000000000') !== false, true);
 check('印紙不要の注記', strpos($pdf, kinv_pdf_hex('収入印紙')) !== false, true);
+
+
+/* ---- 認証（買った人が空から使う経路）---- */
+require_once __DIR__ . '/../public/kinvoice_auth.php';
+check('既定はパスワードモード', kinv_auth_mode(), 'password');
+check('ハッシュ未設定なら管理者になれない', kinv_password_hash_set(), false);
+check('ハッシュ未設定ならログインも通らない', kinv_password_login('anything'), false);
+check('未設定項目にパスワードが挙がる',
+    count(array_filter(kinv_setup_missing(), function ($m) { return strpos($m, 'PASSWORD') !== false; })) > 0, true);
 
 @unlink(KINV_LEDGER);
 @rmdir($tmp);

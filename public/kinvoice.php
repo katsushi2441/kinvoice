@@ -1,38 +1,53 @@
 <?php
 /**
- * Kurage Send Invoice — 領収書の登録・送信（管理者専用）。
+ * 領収書の登録・送信（管理者専用）。
  *
  * 金額・顧客名・発行日・メールアドレスを入れると、領収書PDFを作り、
  * ダウンロードURLをメールで送る。PDFはメールに添付せず、推測困難な
  * URL＋メールアドレス確認の先に置く（誤送信で第三者に届いても開けない）。
  *
- * 認証は共通Xログイン(auth_common.php)。使えるのは KINV_ADMIN だけ。
- * 配置先は kurage.exbridge.jp（auth_common.php と config.php は既設）。
+ * 認証は kinvoice_auth.php（既定はパスワード。設定でXログインにもできる）。
+ * 発行元・製品名・設置先URLはすべて kinvoice_config.php で決める。
+ * このファイルに自社の情報を書かないこと。
  */
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/auth_common.php';
-require_once __DIR__ . '/kinvoice_lib.php';
+require_once __DIR__ . '/kinvoice_auth.php';
 require_once __DIR__ . '/kinvoice_pdf.php';
 date_default_timezone_set('Asia/Tokyo');
 
-$THIS_FILE = 'kinvoice.php';
-$BASE = 'https://kurage.exbridge.jp';
+$THIS_FILE = basename(__FILE__);
+kinv_auth_start();
 
-if (isset($_GET['login']))  { header('Location: ' . url2ai_auth_login_url('/' . $THIS_FILE)); exit; }
-if (isset($_GET['logout'])) { header('Location: ' . url2ai_auth_logout_url('/' . $THIS_FILE)); exit; }
+$login_error = '';
 
-$auth = url2ai_auth_bootstrap();
-$logged_in = !empty($auth['logged_in']);
-$user = $logged_in ? strtolower(ltrim(trim((string)$auth['session_user']), '@')) : '';
-// KINV_ADMIN が未設定(空)のときは、誰も管理者にしない。
-// 空同士の一致で入られないよう、空チェックを先に置く。
-$is_admin = $logged_in && KINV_ADMIN !== '' && $user !== ''
-            && hash_equals(strtolower(KINV_ADMIN), $user);
+if (isset($_GET['logout'])) {
+    if (kinv_auth_mode() === 'x' && function_exists('url2ai_auth_logout_url')) {
+        header('Location: ' . url2ai_auth_logout_url('/' . $THIS_FILE)); exit;
+    }
+    kinv_auth_logout();
+    header('Location: ' . $THIS_FILE); exit;
+}
+if (isset($_GET['login']) && kinv_auth_mode() === 'x' && function_exists('url2ai_auth_login_url')) {
+    header('Location: ' . url2ai_auth_login_url('/' . $THIS_FILE)); exit;
+}
+if (kinv_auth_mode() === 'password' && isset($_POST['do_login'])) {
+    if (kinv_login_locked()) {
+        $login_error = '試行回数が多いため、しばらく時間をおいてからお試しください。';
+    } elseif (!kinv_password_login(isset($_POST['password']) ? $_POST['password'] : '')) {
+        $login_error = 'パスワードが違います。';
+    } else {
+        header('Location: ' . $THIS_FILE); exit;
+    }
+}
+
+$is_admin = kinv_is_admin();
+$missing  = kinv_setup_missing();
 
 if (empty($_SESSION['kinv_csrf'])) { $_SESSION['kinv_csrf'] = kinv_random_hex(24); }
 $csrf = (string)$_SESSION['kinv_csrf'];
 
-function kinv_dl_url($token) { global $BASE; return $BASE . '/kinvoice_dl.php?t=' . rawurlencode($token); }
+function kinv_dl_url($token) {
+    return kinv_base_url() . '/kinvoice_dl.php?t=' . rawurlencode($token);
+}
 
 /* ---- 管理者が自分の控えとしてPDFを見る ---- */
 if ($is_admin && isset($_GET['pdf'])) {
@@ -121,7 +136,7 @@ function h($v) { return kinv_h($v); }
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kurage Send Invoice — 領収書の発行・送信</title>
+<title><?php echo h(kinv_app_title()); ?></title>
 <meta name="description" content="領収書PDFを発行し、ダウンロードURLをお客様へメールで送る管理ツールです。">
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -198,15 +213,17 @@ footer.site{text-align:center;color:var(--abyss-soft);font-size:12.5px;padding:3
 <body>
 
 <header class="site"><div class="wrap">
-  <a class="hbrand" href="<?php echo $THIS_FILE; ?>">
-    <span class="ico"><img src="images/kurage-ecosystem-avatar.png" alt="Kurage"></span>
-    <div><strong>Kurage Send Invoice</strong><span>領収書の発行・送信</span></div>
+  <a class="hbrand" href="<?php echo h($THIS_FILE); ?>">
+<?php if (kinv_logo() !== ''): ?>
+    <span class="ico"><img src="<?php echo h(kinv_logo()); ?>" alt=""></span>
+<?php endif; ?>
+    <div><strong><?php echo h(kinv_app_title()); ?></strong>
+      <span><?php echo h($issuer_name !== '' ? $issuer_name : '発行元 未設定'); ?></span></div>
   </a>
   <nav class="hnav">
-<?php if ($logged_in): ?>
-    <span class="chip">@<?php echo h($user); ?></span>
+<?php if ($is_admin): ?>
     <a class="chip" href="?logout=1">ログアウト</a>
-<?php else: ?>
+<?php elseif (kinv_auth_mode() === 'x'): ?>
     <a class="chip" href="?login=1">𝕏 でログイン</a>
 <?php endif; ?>
   </nav>
@@ -214,21 +231,41 @@ footer.site{text-align:center;color:var(--abyss-soft);font-size:12.5px;padding:3
 
 <main class="wrap">
 
-<?php if (!$logged_in): ?>
+<?php if (!$is_admin): ?>
   <section>
-    <h1>領収書の発行・送信</h1>
-    <p class="lead">この画面は管理者専用です。𝕏 でログインしてください。</p>
-    <p><a class="btn" href="?login=1">𝕏 でログイン</a></p>
-  </section>
+    <h1><?php echo h(kinv_app_title()); ?></h1>
 
-<?php elseif (!$is_admin): ?>
-  <section>
-    <h1>ご利用いただけません</h1>
-    <p class="lead">この画面は管理者（@<?php echo h(KINV_ADMIN); ?>）専用です。</p>
-    <p><a href="https://kurage.exbridge.jp/">Kurage トップへ</a></p>
+    <?php if ($missing): ?>
+      <div class="card plain">
+        <h2>初期設定が終わっていません</h2>
+        <p style="font-size:14px">同じディレクトリの <code>kinvoice_config.php</code> に、次の項目を設定してください。
+          <code>kinvoice_config.php.example</code> をコピーして作れます。</p>
+        <ul style="font-size:14px;padding-left:22px;margin-top:10px">
+          <?php foreach ($missing as $m): ?><li><code><?php echo h($m); ?></code></li><?php endforeach; ?>
+        </ul>
+      </div>
+    <?php endif; ?>
+
+    <?php if (kinv_auth_mode() === 'x'): ?>
+      <p class="lead">この画面は管理者専用です。𝕏 でログインしてください。</p>
+      <p><a class="btn" href="?login=1">𝕏 でログイン</a></p>
+    <?php elseif (kinv_password_hash_set()): ?>
+      <p class="lead">管理パスワードを入力してください。</p>
+      <?php if ($login_error !== ''): ?><p class="err"><?php echo h($login_error); ?></p><?php endif; ?>
+      <form method="post" class="card" style="max-width:420px">
+        <label for="password">パスワード</label>
+        <input type="password" id="password" name="password" required autofocus autocomplete="current-password"
+               style="width:100%;font:inherit;font-size:16px;color:inherit;background:var(--foam);
+                      border:1.5px solid var(--panel-line);border-radius:10px;padding:10px 12px">
+        <button type="submit" name="do_login" value="1" class="btn" style="margin-top:16px">ログイン</button>
+      </form>
+    <?php endif; ?>
   </section>
 
 <?php else: ?>
+  <?php if ($missing): ?>
+    <p class="err" style="margin-top:22px">設定が未完了です：<?php echo h(implode(' / ', $missing)); ?></p>
+  <?php endif; ?>
   <section>
     <h1>領収書を発行する</h1>
     <p class="lead">金額・顧客名・発行日・メールアドレスを入れると、領収書PDFを作り、
@@ -344,7 +381,7 @@ footer.site{text-align:center;color:var(--abyss-soft);font-size:12.5px;padding:3
 </main>
 
 <footer class="site"><div class="wrap">
-  Kurage Send Invoice<?php echo $issuer_name !== '' ? ' — ' . h($issuer_name) : ''; ?>
+  <?php echo h(kinv_app_title()); ?><?php echo $issuer_name !== '' ? ' — ' . h($issuer_name) : ''; ?>
 </div></footer>
 </body>
 </html>

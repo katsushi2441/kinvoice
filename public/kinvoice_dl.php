@@ -94,7 +94,9 @@ input[type=email]:focus{outline:2px solid var(--teal);border-color:var(--teal)}
 </head>
 <body>
 <div class="box">
-  <div class="ico"><img src="images/kurage-ecosystem-avatar.png" alt="Kurage"></div>
+<?php if (kinv_logo() !== ''): ?>
+  <div class="ico"><img src="<?php echo h(kinv_logo()); ?>" alt=""></div>
+<?php endif; ?>
 
 <?php if (!$r): ?>
   <h1>ページが見つかりません</h1>

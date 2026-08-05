@@ -10,7 +10,11 @@
 
 // 設定はここで最初に読む。defineは先勝ちなので、既定値より前に読まないと
 // 設定ファイルの値が効かない（画面側で読むと手遅れになる）。
-if (file_exists(__DIR__ . '/kinvoice_config.php')) { require_once __DIR__ . '/kinvoice_config.php'; }
+//
+// KINV_CONFIG_FILE を先に定義すれば、置き場所を変えられる。公開領域の外
+// （例: dirname(__DIR__) . '/kinvoice_config.php'）に置くとより安全。
+if (!defined('KINV_CONFIG_FILE')) { define('KINV_CONFIG_FILE', __DIR__ . '/kinvoice_config.php'); }
+if (KINV_CONFIG_FILE !== '' && file_exists(KINV_CONFIG_FILE)) { require_once KINV_CONFIG_FILE; }
 
 if (!defined('KINV_DATA_DIR')) { define('KINV_DATA_DIR', __DIR__ . '/kinvoice_data'); }
 define('KINV_LEDGER', KINV_DATA_DIR . '/receipts.json');
@@ -47,11 +51,18 @@ function kinv_issuer() {
 /** 設定が足りているか。管理画面で未設定を知らせるために使う。 */
 function kinv_config_missing() {
     $miss = array();
-    if (!defined('KINV_ADMIN') || KINV_ADMIN === '') { $miss[] = 'KINV_ADMIN（管理者のXアカウント）'; }
     if (!defined('KINV_NAME') || KINV_NAME === '')   { $miss[] = 'KINV_NAME（発行元の名称）'; }
     if (!defined('KINV_MAIL_FROM') || KINV_MAIL_FROM === '') { $miss[] = 'KINV_MAIL_FROM（送信元メールアドレス）'; }
     return $miss;
 }
+
+/** 画面に出す製品名。買った人が自分の名前に変えられるようにする。 */
+function kinv_app_title() {
+    return defined('KINV_APP_TITLE') && KINV_APP_TITLE !== '' ? KINV_APP_TITLE : '領収書の発行・送信';
+}
+
+/** ヘッダーのアイコン画像。設定が無ければ出さない（同梱していないため）。 */
+function kinv_logo() { return defined('KINV_LOGO') ? KINV_LOGO : ''; }
 
 function kinv_h($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 

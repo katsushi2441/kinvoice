@@ -1,22 +1,24 @@
 <?php
 /**
- * kinvoice の実行時設定。
+ * 実行時設定。このファイルをコピーして kinvoice_config.php を作り、
+ * 自分の値に書き換えてください。kinvoice_config.php はリポジトリに入りません。
  *
- * このファイルをコピーして kinvoice_config.php を作り、自社の値を入れる。
- * kinvoice_config.php は .gitignore 済み（リポジトリに入れない）。
- * 未設定の項目は領収書に印字されない。
+ * 未設定の項目は領収書に印字されません。
  */
 
-// 領収書を発行できるXアカウント（@は不要）。未設定だと誰も管理画面に入れない。
-define('KINV_ADMIN', 'your_x_account');
+/* ── 1. ログイン ─────────────────────────────
+ * 管理パスワードのハッシュを作って貼ります。
+ *   php scripts/make_password_hash.php 'あなたのパスワード'
+ * 設定しないと管理画面には入れません。 */
+define('KINV_ADMIN_PASSWORD_HASH', '');
 
-// 発行元の名称。領収書とメールの署名に出る。
+/* ── 2. 発行元 ─────────────────────────────── */
 define('KINV_NAME', '株式会社サンプル');
 
 // 送信元メールアドレス。
 // 【重要】共有サーバーから送る場合、そのサーバーが送信ドメインのSPFに
-// 含まれていないと受信側に捨てられる。届かないときはここを疑うこと。
-//   例) dig +short TXT example.co.jp | grep spf
+// 含まれていないと、受信側に捨てられます。届かないときはまずここを疑ってください。
+//   確認: dig +short TXT example.co.jp | grep spf
 define('KINV_MAIL_FROM', 'info@example.co.jp');
 
 // 適格請求書発行事業者の登録番号（T＋13桁）。
@@ -26,3 +28,21 @@ define('KINV_MAIL_FROM', 'info@example.co.jp');
 // 住所。領収書に住所は法定の記載事項ではないので、不要なら定義しなくてよい。
 // define('KINV_ZIP',  '〒000-0000');
 // define('KINV_ADDR', '東京都千代田区サンプル1-2-3');
+
+/* ── 3. 見た目（任意） ───────────────────────── */
+// 画面の見出し。自分のサービス名に変えられます。
+// define('KINV_APP_TITLE', '領収書の発行・送信');
+// ヘッダーに出すアイコン画像のパス。置かなければ表示しません。
+// define('KINV_LOGO', 'images/logo.png');
+
+/* ── 4. 設置先URL（任意） ────────────────────── */
+// メールに載せるダウンロードURLの基点。未設定ならアクセスされたURLから自動で組み立てます。
+// リバースプロキシ配下などで自動判定がずれる場合だけ設定してください。
+// define('KINV_BASE_URL', 'https://example.co.jp');
+
+/* ── 5. X(Twitter)ログインを使う場合だけ ─────────
+ * 既定はパスワードです。X認証の仕組みを別に持っている場合のみ。
+ * auth_common.php を同じディレクトリに置く必要があります。
+// define('KINV_AUTH', 'x');
+// define('KINV_ADMIN', 'your_x_account');
+ */

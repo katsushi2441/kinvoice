@@ -21,6 +21,53 @@
 漏れたときに、誰宛のいくらの領収書かが分かってしまうため）。
 メールアドレスの入力を10回間違えるとロックし、管理画面から解除します。
 
+
+## 導入手順（設置する方向け）
+
+必要なのは **PHPが動くサーバー**だけです。データベースも常駐プロセスも使いません。
+
+1. `public/` の中身をサーバーに置く（FTPで上げるだけ）
+2. `kinvoice_config.php.example` をコピーして `kinvoice_config.php` を作る
+3. 管理パスワードのハッシュを作って貼る
+
+   ```bash
+   php scripts/make_password_hash.php 'あなたのパスワード'
+   ```
+
+4. 発行元の名称と送信元メールアドレスを設定する
+5. `kinvoice.php` を開いてログイン
+
+設定が足りないうちは、管理画面が**不足している項目を名指しで表示**します。
+設定を置くまで誰もログインできません。
+
+`kinvoice_data/` は自動で作られます。書き込み権限が要ります。
+
+### メールが届かないとき
+
+まず **SPF** を疑ってください。共有サーバーから送る場合、送信ドメインのSPFに
+そのサーバーが含まれていないと、受信側で捨てられます。`mail()` は成功を返すので、
+送信履歴上は「送信済」に見えます。
+
+```bash
+dig +short TXT example.co.jp | grep spf
+```
+
+`KINV_MAIL_FROM` を、そのサーバーから送れるドメインのアドレスに変えてください。
+
+### 設定を公開領域の外に置く
+
+`KINV_CONFIG_FILE` を先に定義すれば、設定ファイルの場所を変えられます。
+Webから読めない場所に置くとより安全です。
+
+```php
+define('KINV_CONFIG_FILE', dirname(__DIR__) . '/kinvoice_config.php');
+```
+
+### ログイン方式
+
+既定は**パスワード**です。X(Twitter)のOAuth基盤を別に持っている場合は
+`KINV_AUTH` を `'x'` にすると、`auth_common.php` を使う方式に切り替わります。
+
 ## 構成
 
 heteml の素のPHPだけで動きます。**常駐プロセスもDBもポートも使いません。**
@@ -47,7 +94,7 @@ heteml の素のPHPだけで動きます。**常駐プロセスもDBもポート
 ## 開発
 
 ```bash
-php scripts/check_kinvoice.php   # 台帳・認証・税計算・PDF の確認（41項目）
+php scripts/check_kinvoice.php   # 台帳・認証・税計算・PDF の確認（45項目）
 bash scripts/deploy.sh           # kurage.exbridge.jp へ公開
 ```
 

@@ -21,6 +21,7 @@ upload() {
 
 upload public/kinvoice.php     kinvoice.php
 upload public/kinvoice_dl.php  kinvoice_dl.php
+upload public/kinvoice_auth.php kinvoice_auth.php
 upload public/kinvoice_lib.php kinvoice_lib.php
 upload public/kinvoice_pdf.php kinvoice_pdf.php
 [[ -f public/kinvoice_config.php ]] && upload public/kinvoice_config.php kinvoice_config.php
