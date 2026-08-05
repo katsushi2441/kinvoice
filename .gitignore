@@ -5,3 +5,12 @@ public/kinvoice_data/*
 outputs/
 *.pyc
 __pycache__/
+
+# ── ここから下は「有償パッケージにだけ同梱する」もの ──
+# GitHubからOSSとして取得する人にはコードだけを渡す。
+# 教材とVWorkは、ダウンロード販売の価格の根拠なので公開しない。
+# 削除はしない。ローカルには置いたまま、scripts/build_package.sh で束ねる。
+vwork/
+docs/
+AGENTS.md
+INSTALL.md
