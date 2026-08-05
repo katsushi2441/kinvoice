@@ -138,15 +138,15 @@ function kinv_receipt_pdf($r) {
     $c .= kinv_pdf_text($L, 726, 15, $to . ' 様');
     $c .= kinv_pdf_line($L, 718, 340, 718, 0.8);
 
-    // 発行元
+    // 発行元。住所は法定の記載事項ではないので1行だけ。電話・FAXは載せない。
     $c .= kinv_pdf_text(360, 726, 11, $issuer['name']);
-    $c .= kinv_pdf_text(360, 712, 7.5, $issuer['zip'] . ' ' . $issuer['addr1']);
-    $c .= kinv_pdf_text(360, 701, 7.5, $issuer['addr2']);
-    $c .= kinv_pdf_text(360, 690, 7.5, $issuer['tel']);
-    $c .= kinv_pdf_text(360, 679, 7.5, $issuer['mail']);
+    $y = 712;
     if ($issuer['invoice_no'] !== '') {
-        $c .= kinv_pdf_text(360, 668, 7.5, '登録番号 ' . $issuer['invoice_no']);
+        $c .= kinv_pdf_text(360, $y, 8, '登録番号 ' . $issuer['invoice_no']);
+        $y -= 12;
     }
+    $c .= kinv_pdf_text(360, $y, 7.5, $issuer['zip'] . ' ' . $issuer['addr']);
+    $c .= kinv_pdf_text(360, $y - 11, 7.5, $issuer['mail']);
 
     // 金額（領収書の主役）
     $c .= kinv_pdf_rect_fill($L, 606, 340, 46);
@@ -177,18 +177,13 @@ function kinv_receipt_pdf($r) {
     $c .= kinv_pdf_text($L + 430, $sy, 10, '￥' . number_format($t['total']));
     $c .= kinv_pdf_line($L + 325, $sy - 7, $R, $sy - 7, 0.5);
 
-    // 注記
+    // 注記。発行元は上に書いてあるので、脚注で住所を繰り返さない。
     $c .= kinv_pdf_text($L, $sy - 46, 8.5,
         '・本領収書は電子的に交付しているため、収入印紙の貼付は不要です。');
     if ($issuer['invoice_no'] === '') {
         $c .= kinv_pdf_text($L, $sy - 60, 8.5,
             '・適格請求書発行事業者の登録番号は記載しておりません。');
     }
-
-    // 脚注
-    $c .= kinv_pdf_line($L, 70, $R, 70, 0.5);
-    $c .= kinv_pdf_text($L, 56, 8, $issuer['name'] . '　' . $issuer['zip'] . ' '
-        . $issuer['addr1'] . ' ' . $issuer['addr2']);
 
     return kinv_pdf_document($c);
 }

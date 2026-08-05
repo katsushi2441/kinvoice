@@ -17,18 +17,27 @@ if (!defined('KINV_ADMIN')) { define('KINV_ADMIN', 'xb_bittensor'); }
 // メール認証の総当たり対策。これを超えたら管理者が解除するまで開かない。
 define('KINV_MAX_FAIL', 10);
 
-/** 発行元。tokusho.php の実データに合わせる。変えたら特商法ページも直すこと。 */
+/**
+ * 発行元。
+ *
+ * 領収書に住所は法定の記載事項ではない（適格請求書の記載事項に住所は含まれず、
+ * 登録番号があれば国税庁の公表サイトで事業者を特定できる）。慣行に合わせて
+ * 1行だけ入れ、建物名は省いて部屋番号のみとする。電話・FAXは載せない。
+ *
+ * メールは送信元(From)にも使う。heteml から送るので、SPFに heteml が
+ * 入っているドメインでなければ受信側に捨てられる。
+ *   exbridge.jp   v=spf1 include:_spf.heteml.jp  → 送れる
+ *   exdirect.net  v=spf1 redirect=_spf.ocnk.net  → 送れない（2026-08-05に実際に不達）
+ */
 function kinv_issuer() {
     return array(
         'name'  => '株式会社エクスブリッジ',
         'zip'   => '〒467-0853',
-        'addr1' => '愛知県名古屋市瑞穂区内浜町34-9',
-        'addr2' => '宝第二スカイハイツ305',
-        'tel'   => 'TEL 050-5436-6141 / FAX 052-388-7758',
-        'mail'  => 'info@exdirect.net',
-        // 適格請求書発行事業者の登録番号。未取得なら空のままにする
-        // （空なら領収書に印字しない。存在しない番号を書かないため）。
-        'invoice_no' => defined('KINV_INVOICE_REG_NO') ? KINV_INVOICE_REG_NO : '',
+        'addr'  => '愛知県名古屋市瑞穂区内浜町34-9-305',
+        'mail'  => defined('KINV_MAIL_FROM') ? KINV_MAIL_FROM : 'info@exbridge.jp',
+        // 適格請求書発行事業者の登録番号。空なら領収書に印字しない
+        // （存在しない番号を書かないため）。
+        'invoice_no' => defined('KINV_INVOICE_REG_NO') ? KINV_INVOICE_REG_NO : 'T4180001056508',
     );
 }
 
@@ -221,8 +230,8 @@ function kinv_send_mail($r, $download_url) {
           . "※電子的に交付する領収書のため、収入印紙は不要です。\n\n"
           . "──────────────────────────\n"
           . $issuer['name'] . "\n"
-          . $issuer['zip'] . ' ' . $issuer['addr1'] . ' ' . $issuer['addr2'] . "\n"
-          . $issuer['tel'] . "\n"
+          . ($issuer['invoice_no'] !== '' ? '登録番号 ' . $issuer['invoice_no'] . "\n" : '')
+          . $issuer['zip'] . ' ' . $issuer['addr'] . "\n"
           . $issuer['mail'] . "\n";
 
     $headers = implode("\r\n", array(

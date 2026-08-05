@@ -124,8 +124,8 @@ input[type=email]:focus{outline:2px solid var(--teal);border-color:var(--teal)}
 
   <p class="note">
     <?php echo h($issuer['name']); ?><br>
-    <?php echo h($issuer['zip'] . ' ' . $issuer['addr1'] . ' ' . $issuer['addr2']); ?><br>
-    <?php echo h($issuer['tel']); ?><br>
+    <?php if ($issuer['invoice_no'] !== ''): ?>登録番号 <?php echo h($issuer['invoice_no']); ?><br><?php endif; ?>
+    <?php echo h($issuer['zip'] . ' ' . $issuer['addr']); ?><br>
     <a href="mailto:<?php echo h($issuer['mail']); ?>"><?php echo h($issuer['mail']); ?></a>
   </p>
 </div>
