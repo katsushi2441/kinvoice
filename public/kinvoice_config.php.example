@@ -1,7 +1,28 @@
 <?php
-// kinvoice の実行時設定。実物はリポジトリに入れない（deploy.sh が配置する）。
-// 適格請求書発行事業者の登録番号。取得したらここに入れると領収書に印字される。
-// 未取得のまま架空の番号を入れないこと。
+/**
+ * kinvoice の実行時設定。
+ *
+ * このファイルをコピーして kinvoice_config.php を作り、自社の値を入れる。
+ * kinvoice_config.php は .gitignore 済み（リポジトリに入れない）。
+ * 未設定の項目は領収書に印字されない。
+ */
+
+// 領収書を発行できるXアカウント（@は不要）。未設定だと誰も管理画面に入れない。
+define('KINV_ADMIN', 'your_x_account');
+
+// 発行元の名称。領収書とメールの署名に出る。
+define('KINV_NAME', '株式会社サンプル');
+
+// 送信元メールアドレス。
+// 【重要】共有サーバーから送る場合、そのサーバーが送信ドメインのSPFに
+// 含まれていないと受信側に捨てられる。届かないときはここを疑うこと。
+//   例) dig +short TXT example.co.jp | grep spf
+define('KINV_MAIL_FROM', 'info@example.co.jp');
+
+// 適格請求書発行事業者の登録番号（T＋13桁）。
+// 未取得なら定義しないでおく。架空の番号を入れないこと。
 // define('KINV_INVOICE_REG_NO', 'T1234567890123');
-// 送信元メールアドレス（既定は tokusho.php の info@exdirect.net）
-// define('KINV_MAIL_FROM', 'info@exdirect.net');
+
+// 住所。領収書に住所は法定の記載事項ではないので、不要なら定義しなくてよい。
+// define('KINV_ZIP',  '〒000-0000');
+// define('KINV_ADDR', '東京都千代田区サンプル1-2-3');

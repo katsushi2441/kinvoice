@@ -2,8 +2,8 @@
 
 **領収書をPDFで発行し、ダウンロードURLをお客様へメールで送る。** 管理者専用。
 
-- 管理画面: <https://kurage.exbridge.jp/kinvoice.php>（`@xb_bittensor` のみ）
-- 顧客用  : `https://kurage.exbridge.jp/kinvoice_dl.php?t=<32桁トークン>`
+- 管理画面: `/kinvoice.php`（`KINV_ADMIN` に設定したXアカウントのみ）
+- 顧客用  : `/kinvoice_dl.php?t=<32桁トークン>`
 
 ## 使い方
 

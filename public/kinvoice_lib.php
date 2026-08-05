@@ -8,37 +8,49 @@
  * PHP 5.x でも動く構文だけを使う。
  */
 
+// 設定はここで最初に読む。defineは先勝ちなので、既定値より前に読まないと
+// 設定ファイルの値が効かない（画面側で読むと手遅れになる）。
+if (file_exists(__DIR__ . '/kinvoice_config.php')) { require_once __DIR__ . '/kinvoice_config.php'; }
+
 if (!defined('KINV_DATA_DIR')) { define('KINV_DATA_DIR', __DIR__ . '/kinvoice_data'); }
 define('KINV_LEDGER', KINV_DATA_DIR . '/receipts.json');
 
-// 使えるのはこの人だけ。領収書は会社名義の発行物なので、他人に触らせない。
-if (!defined('KINV_ADMIN')) { define('KINV_ADMIN', 'xb_bittensor'); }
+// 領収書を発行できるXアカウント。未設定なら誰も管理者にしない（安全側に倒す）。
+if (!defined('KINV_ADMIN')) { define('KINV_ADMIN', ''); }
 
 // メール認証の総当たり対策。これを超えたら管理者が解除するまで開かない。
 define('KINV_MAX_FAIL', 10);
 
 /**
- * 発行元。
+ * 発行元。値はすべて kinvoice_config.php で設定する。
+ * このファイルは公開リポジトリに入るので、自社の情報を直接書かないこと。
  *
  * 領収書に住所は法定の記載事項ではない（適格請求書の記載事項に住所は含まれず、
- * 登録番号があれば国税庁の公表サイトで事業者を特定できる）。慣行に合わせて
- * 1行だけ入れ、建物名は省いて部屋番号のみとする。電話・FAXは載せない。
+ * 登録番号があれば国税庁の公表サイトで事業者を特定できる）。空にすれば印字しない。
  *
- * メールは送信元(From)にも使う。heteml から送るので、SPFに heteml が
- * 入っているドメインでなければ受信側に捨てられる。
- *   exbridge.jp   v=spf1 include:_spf.heteml.jp  → 送れる
- *   exdirect.net  v=spf1 redirect=_spf.ocnk.net  → 送れない（2026-08-05に実際に不達）
+ * メールは送信元(From)にも使う。共有サーバーから送る場合、そのサーバーが
+ * SPFに含まれているドメインでなければ受信側に捨てられる。
+ * （heteml から exdirect.net の From で送って不達になった実例あり）
  */
 function kinv_issuer() {
     return array(
-        'name'  => '株式会社エクスブリッジ',
-        'zip'   => '〒467-0853',
-        'addr'  => '愛知県名古屋市瑞穂区内浜町34-9-305',
-        'mail'  => defined('KINV_MAIL_FROM') ? KINV_MAIL_FROM : 'info@exbridge.jp',
+        'name'  => defined('KINV_NAME') ? KINV_NAME : '',
+        'zip'   => defined('KINV_ZIP')  ? KINV_ZIP  : '',
+        'addr'  => defined('KINV_ADDR') ? KINV_ADDR : '',
+        'mail'  => defined('KINV_MAIL_FROM') ? KINV_MAIL_FROM : '',
         // 適格請求書発行事業者の登録番号。空なら領収書に印字しない
         // （存在しない番号を書かないため）。
-        'invoice_no' => defined('KINV_INVOICE_REG_NO') ? KINV_INVOICE_REG_NO : 'T4180001056508',
+        'invoice_no' => defined('KINV_INVOICE_REG_NO') ? KINV_INVOICE_REG_NO : '',
     );
+}
+
+/** 設定が足りているか。管理画面で未設定を知らせるために使う。 */
+function kinv_config_missing() {
+    $miss = array();
+    if (!defined('KINV_ADMIN') || KINV_ADMIN === '') { $miss[] = 'KINV_ADMIN（管理者のXアカウント）'; }
+    if (!defined('KINV_NAME') || KINV_NAME === '')   { $miss[] = 'KINV_NAME（発行元の名称）'; }
+    if (!defined('KINV_MAIL_FROM') || KINV_MAIL_FROM === '') { $miss[] = 'KINV_MAIL_FROM（送信元メールアドレス）'; }
+    return $miss;
 }
 
 function kinv_h($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Kurage Send Invoice の公開デプロイ。
-#   管理画面 : https://kurage.exbridge.jp/kinvoice.php     （@xb_bittensor のみ）
+#   管理画面 : https://kurage.exbridge.jp/kinvoice.php     （KINV_ADMIN のみ）
 #   顧客用   : https://kurage.exbridge.jp/kinvoice_dl.php?t=<token>
 #
 # 常駐プロセスもDBもポートも使わない。auth_common.php と config.php は

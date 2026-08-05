@@ -13,7 +13,6 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth_common.php';
 require_once __DIR__ . '/kinvoice_lib.php';
 require_once __DIR__ . '/kinvoice_pdf.php';
-if (file_exists(__DIR__ . '/kinvoice_config.php')) { require_once __DIR__ . '/kinvoice_config.php'; }
 date_default_timezone_set('Asia/Tokyo');
 
 $THIS_FILE = 'kinvoice.php';
@@ -25,7 +24,10 @@ if (isset($_GET['logout'])) { header('Location: ' . url2ai_auth_logout_url('/' .
 $auth = url2ai_auth_bootstrap();
 $logged_in = !empty($auth['logged_in']);
 $user = $logged_in ? strtolower(ltrim(trim((string)$auth['session_user']), '@')) : '';
-$is_admin = $logged_in && $user === strtolower(KINV_ADMIN);
+// KINV_ADMIN が未設定(空)のときは、誰も管理者にしない。
+// 空同士の一致で入られないよう、空チェックを先に置く。
+$is_admin = $logged_in && KINV_ADMIN !== '' && $user !== ''
+            && hash_equals(strtolower(KINV_ADMIN), $user);
 
 if (empty($_SESSION['kinv_csrf'])) { $_SESSION['kinv_csrf'] = kinv_random_hex(24); }
 $csrf = (string)$_SESSION['kinv_csrf'];
@@ -112,6 +114,7 @@ if ($done && isset($_GET['mailng'])) { $error = 'メールの送信に失敗し�
 elseif ($done) { $notice = $done['no'] . ' を発行し、' . $done['email'] . ' へ送信しました。'; }
 
 $list = $is_admin ? kinv_recent() : array();
+$issuer_name = kinv_issuer()['name'];
 function h($v) { return kinv_h($v); }
 ?><!doctype html>
 <html lang="ja">
@@ -341,8 +344,7 @@ footer.site{text-align:center;color:var(--abyss-soft);font-size:12.5px;padding:3
 </main>
 
 <footer class="site"><div class="wrap">
-  Kurage Send Invoice — <a href="https://exbridge.jp/">株式会社エクスブリッジ</a> ·
-  <a href="https://kurage.exbridge.jp/">Kurage シリーズ</a>
+  Kurage Send Invoice<?php echo $issuer_name !== '' ? ' — ' . h($issuer_name) : ''; ?>
 </div></footer>
 </body>
 </html>

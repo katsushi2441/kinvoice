@@ -5,6 +5,13 @@
 $tmp = sys_get_temp_dir() . '/kinvoice-check-' . getmypid();
 @mkdir($tmp, 0700, true);
 define('KINV_DATA_DIR', $tmp);
+// 設定はテスト用の値で固定する。lib より先に define すること（先勝ち）。
+define('KINV_ADMIN', 'test_admin');
+define('KINV_NAME', 'テスト発行元株式会社');
+define('KINV_MAIL_FROM', 'noreply@example.test');
+define('KINV_INVOICE_REG_NO', 'T0000000000000');
+define('KINV_ZIP', '〒000-0000');
+define('KINV_ADDR', 'テスト県テスト市1-2-3');
 
 require_once __DIR__ . '/../public/kinvoice_pdf.php';   // 中で kinvoice_lib.php を読む
 
@@ -91,7 +98,8 @@ check('「領収書」が入っている', strpos($pdf, kinv_pdf_hex('領収書'
 check('宛名が入っている', strpos($pdf, kinv_pdf_hex('株式会社アリス')) !== false, true);
 check('但し書きが入っている', strpos($pdf, kinv_pdf_hex('システム開発費')) !== false, true);
 check('金額が入っている', strpos($pdf, '110,000') !== false, true);
-check('発行元が入っている', strpos($pdf, kinv_pdf_hex('株式会社エクスブリッジ')) !== false, true);
+check('発行元が入っている', strpos($pdf, kinv_pdf_hex('テスト発行元株式会社')) !== false, true);
+check('登録番号が入っている', strpos($pdf, 'T0000000000000') !== false, true);
 check('印紙不要の注記', strpos($pdf, kinv_pdf_hex('収入印紙')) !== false, true);
 
 @unlink(KINV_LEDGER);
