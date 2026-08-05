@@ -27,7 +27,7 @@ done
 cp public/kinvoice_data/.htaccess "$OUT/public/kinvoice_data/.htaccess"
 
 # --- 有償パッケージにだけ入るもの ---
-cp AGENTS.md INSTALL.md README.md LICENSE "$OUT/"
+cp AGENTS.md INSTALL.md SUPPORT.md README.md LICENSE "$OUT/"
 cp -r docs "$OUT/docs"
 cp -r vwork "$OUT/vwork"
 
