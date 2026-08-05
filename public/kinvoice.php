@@ -41,6 +41,7 @@ if (kinv_auth_mode() === 'password' && isset($_POST['do_login'])) {
 
 $is_admin = kinv_is_admin();
 $missing  = kinv_setup_missing();
+kinv_demo_cleanup();   // デモの台帳が育ち続けないように
 
 if (empty($_SESSION['kinv_csrf'])) { $_SESSION['kinv_csrf'] = kinv_random_hex(24); }
 $csrf = (string)$_SESSION['kinv_csrf'];
@@ -205,6 +206,8 @@ input:focus,select:focus{outline:2px solid var(--teal);border-color:var(--teal)}
 .tag.lock{border-color:var(--gold-line);color:var(--gold)}
 .urlbox{font-size:11px;color:var(--abyss-soft);word-break:break-all;background:var(--foam);
   border:1px solid var(--panel-line);border-radius:8px;padding:5px 9px;margin-top:5px}
+.demo{background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:12px;
+  padding:12px 16px;font-size:13px;margin:18px 0 0}
 .empty-note{text-align:center;color:var(--abyss-soft);font-size:14px;padding:40px 20px}
 footer.site{text-align:center;color:var(--abyss-soft);font-size:12.5px;padding:32px 20px 44px;
   border-top:1px solid var(--panel-line);margin-top:16px}
@@ -230,6 +233,10 @@ footer.site{text-align:center;color:var(--abyss-soft);font-size:12.5px;padding:3
 </div></header>
 
 <main class="wrap">
+
+<?php if (kinv_is_demo()): ?>
+  <p class="demo">これは<b>デモ</b>です。自由に発行して試せます。<b>メールは実際には送信されません。</b>入力した内容は24時間で消えます。</p>
+<?php endif; ?>
 
 <?php if (!$is_admin): ?>
   <section>
@@ -279,10 +286,29 @@ footer.site{text-align:center;color:var(--abyss-soft);font-size:12.5px;padding:3
       <h2><?php echo h($done['no']); ?> のダウンロードURL</h2>
       <div class="urlbox"><?php echo h(kinv_dl_url($done['token'])); ?></div>
       <p class="hint">お客様には <b><?php echo h($done['email']); ?></b> の入力を求めます。
-        メールが届かない場合は、このURLを直接お伝えください。</p>
+        <?php if (kinv_is_demo()): ?>
+          <b>このURLを開いて、上のアドレスを入力してみてください。</b>
+        <?php else: ?>
+          メールが届かない場合は、このURLを直接お伝えください。
+        <?php endif; ?></p>
       <p style="margin-top:10px">
-        <a class="btn mini ghost" href="?pdf=<?php echo h($done['id']); ?>" target="_blank" rel="noopener">PDFを確認</a></p>
+        <a class="btn" href="<?php echo h(kinv_dl_url($done['token'])); ?>" target="_blank" rel="noopener">ダウンロードページを開く</a>
+        <a class="btn mini ghost" href="?pdf=<?php echo h($done['id']); ?>" target="_blank" rel="noopener"
+           style="margin-left:8px">PDFを確認</a></p>
     </div>
+    <?php if (kinv_is_demo()): ?>
+    <div class="card plain">
+      <h2>お客様に届くメール</h2>
+      <p class="hint" style="margin-bottom:10px">デモでは実際には送信しません。本番ではこの内容が届きます。</p>
+      <div style="font-size:12px;color:var(--abyss-soft);border:1px solid var(--panel-line);
+                  border-radius:10px;padding:8px 12px;margin-bottom:8px">
+        件名: <?php echo h(kinv_mail_subject($done)); ?></div>
+      <pre style="font-size:12.5px;line-height:1.8;white-space:pre-wrap;word-break:break-all;
+                  background:var(--foam);border:1px solid var(--panel-line);border-radius:10px;
+                  padding:14px 16px;font-family:ui-monospace,Menlo,Consolas,monospace"><?php
+        echo h(kinv_mail_body($done, kinv_dl_url($done['token']))); ?></pre>
+    </div>
+    <?php endif; ?>
     <?php endif; ?>
 
     <form method="post" class="card">

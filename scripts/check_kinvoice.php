@@ -108,6 +108,10 @@ check('印紙不要の注記', strpos($pdf, kinv_pdf_hex('収入印紙')) !== fa
 /* ---- 認証（買った人が空から使う経路）---- */
 require_once __DIR__ . '/../public/kinvoice_auth.php';
 check('既定はパスワードモード', kinv_auth_mode(), 'password');
+// 本番でデモ用の掃除が走ると台帳が消える。既定でオフであることを固定する。
+check('既定ではデモモードではない', kinv_is_demo(), false);
+$before = count(kinv_all()); kinv_demo_cleanup(1, 1);
+check('通常モードでは台帳を掃除しない', count(kinv_all()), $before);
 check('ハッシュ未設定なら管理者になれない', kinv_password_hash_set(), false);
 check('ハッシュ未設定ならログインも通らない', kinv_password_login('anything'), false);
 check('未設定項目にパスワードが挙がる',

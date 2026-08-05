@@ -61,6 +61,30 @@ function kinv_app_title() {
     return defined('KINV_APP_TITLE') && KINV_APP_TITLE !== '' ? KINV_APP_TITLE : '領収書の発行・送信';
 }
 
+/**
+ * デモモード。触ってもらうための公開インスタンス用。
+ *
+ * メールを実際に送らないのが要点。誰でも任意のアドレス宛に送信できる
+ * 状態にすると、そのドメインが迷惑メールの踏み台になり、送信評価が落ちて
+ * 本物の領収書まで届かなくなる。
+ */
+function kinv_is_demo() { return defined('KINV_DEMO') && KINV_DEMO; }
+
+/** デモの台帳が育ち続けないように、古いものと多すぎるものを捨てる。 */
+function kinv_demo_cleanup($max_age_sec = 86400, $max_rows = 50) {
+    if (!kinv_is_demo()) { return; }
+    kinv_update(function (&$data) use ($max_age_sec, $max_rows) {
+        $now = time();
+        $kept = array();
+        foreach ($data['receipts'] as $r) {
+            if ($now - (int)$r['created_at'] < $max_age_sec) { $kept[] = $r; }
+        }
+        if (count($kept) > $max_rows) { $kept = array_slice($kept, -$max_rows); }
+        $data['receipts'] = $kept;
+        return array(true, '');
+    });
+}
+
 /** ヘッダーのアイコン画像。設定が無ければ出さない（同梱していないため）。 */
 function kinv_logo() { return defined('KINV_LOGO') ? KINV_LOGO : ''; }
 
@@ -227,16 +251,15 @@ function kinv_unlock($id) {
 
 /* ---------------- メール ---------------- */
 
-/**
- * 領収書のダウンロード案内を送る。
- * heteml で実績のある mail() + base64（exbridge_jp/contact.php と同方式）。
- */
-function kinv_send_mail($r, $download_url) {
-    $issuer = kinv_issuer();
-    $from = defined('KINV_MAIL_FROM') ? KINV_MAIL_FROM : $issuer['mail'];
-    $subject = '【' . $issuer['name'] . '】領収書 ' . $r['no'] . ' のご案内';
+/** 送るメールの件名。画面のプレビューにも使う。 */
+function kinv_mail_subject($r) {
+    return '【' . kinv_issuer()['name'] . '】領収書 ' . $r['no'] . ' のご案内';
+}
 
-    $body = $r['customer'] . " 様\n\n"
+/** 送るメールの本文。デモではこれを画面に出す。 */
+function kinv_mail_body($r, $download_url) {
+    $issuer = kinv_issuer();
+    return $r['customer'] . " 様\n\n"
           . "いつもお世話になっております。" . $issuer['name'] . "です。\n"
           . "領収書を発行いたしましたので、下記よりダウンロードしてください。\n\n"
           . "──────────────────────────\n"
@@ -256,7 +279,21 @@ function kinv_send_mail($r, $download_url) {
           . ($issuer['invoice_no'] !== '' ? '登録番号 ' . $issuer['invoice_no'] . "\n" : '')
           . $issuer['zip'] . ' ' . $issuer['addr'] . "\n"
           . $issuer['mail'] . "\n";
+}
 
+/**
+ * 領収書のダウンロード案内を送る。
+ * mail() + base64（exbridge_jp/contact.php と同方式）。
+ *
+ * デモモードでは実際に送らない。公開デモに送信フォームを置くと、
+ * 誰でも任意のアドレス宛に送れる踏み台になり、そのドメインの送信評価が
+ * 落ちて本物の領収書まで届かなくなるため。
+ */
+function kinv_send_mail($r, $download_url) {
+    if (kinv_is_demo()) { return true; }
+
+    $issuer = kinv_issuer();
+    $from = defined('KINV_MAIL_FROM') ? KINV_MAIL_FROM : $issuer['mail'];
     $headers = implode("\r\n", array(
         'From: ' . $issuer['name'] . ' <' . $from . '>',
         'Reply-To: ' . $from,
@@ -267,8 +304,8 @@ function kinv_send_mail($r, $download_url) {
     ));
     return @mail(
         $r['email'],
-        '=?UTF-8?B?' . base64_encode($subject) . '?=',
-        chunk_split(base64_encode($body)),
+        '=?UTF-8?B?' . base64_encode(kinv_mail_subject($r)) . '?=',
+        chunk_split(base64_encode(kinv_mail_body($r, $download_url))),
         $headers
     );
 }

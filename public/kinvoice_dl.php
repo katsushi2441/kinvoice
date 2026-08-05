@@ -89,6 +89,8 @@ input[type=email]:focus{outline:2px solid var(--teal);border-color:var(--teal)}
 .err{background:#fdecea;border:1.5px solid #f5c6c2;color:#a3261b;border-radius:10px;
   padding:11px 13px;font-size:13px;margin-bottom:16px}
 @media(prefers-color-scheme:dark){.err{background:#2a1512;border-color:#5c2a24;color:#ff9d92}}
+.demo{background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:10px;
+  padding:10px 13px;font-size:12.5px;margin-bottom:16px}
 .note{font-size:11.5px;color:var(--abyss-soft);margin-top:18px;border-top:1px solid var(--panel-line);padding-top:14px}
 </style>
 </head>
@@ -96,6 +98,10 @@ input[type=email]:focus{outline:2px solid var(--teal);border-color:var(--teal)}
 <div class="box">
 <?php if (kinv_logo() !== ''): ?>
   <div class="ico"><img src="<?php echo h(kinv_logo()); ?>" alt=""></div>
+<?php endif; ?>
+
+<?php if (kinv_is_demo()): ?>
+  <p class="demo">これは<b>デモ</b>です。実際の領収書ではありません。</p>
 <?php endif; ?>
 
 <?php if (!$r): ?>
