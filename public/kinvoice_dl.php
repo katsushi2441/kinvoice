@@ -93,6 +93,7 @@ input[type=email]:focus{outline:2px solid var(--teal);border-color:var(--teal)}
   padding:10px 13px;font-size:12.5px;margin-bottom:16px}
 .note{font-size:11.5px;color:var(--abyss-soft);margin-top:18px;border-top:1px solid var(--panel-line);padding-top:14px}
 </style>
+<?php if (defined('KINV_HEAD_EXTRA')) { echo KINV_HEAD_EXTRA; } ?>
 </head>
 <body>
 <div class="box">

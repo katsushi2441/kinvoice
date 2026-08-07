@@ -212,6 +212,7 @@ input:focus,select:focus{outline:2px solid var(--teal);border-color:var(--teal)}
 footer.site{text-align:center;color:var(--abyss-soft);font-size:12.5px;padding:32px 20px 44px;
   border-top:1px solid var(--panel-line);margin-top:16px}
 </style>
+<?php if (defined('KINV_HEAD_EXTRA')) { echo KINV_HEAD_EXTRA; } ?>
 </head>
 <body>
 
