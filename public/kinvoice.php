@@ -410,5 +410,6 @@ footer.site{text-align:center;color:var(--abyss-soft);font-size:12.5px;padding:3
 <footer class="site"><div class="wrap">
   <?php echo h(kinv_app_title()); ?><?php echo $issuer_name !== '' ? ' — ' . h($issuer_name) : ''; ?>
 </div></footer>
+<?php if (($_SERVER['HTTP_HOST'] ?? '') === 'proto.exbridge.jp'): ?><p style="text-align:center;font-size:13px;margin:14px 0;color:#5d6b7a">これはデモです。<a href="https://kappstore.exbridge.jp/app.php?id=61febea74f9c74b0&amp;ref=kinvoice" target="_blank" rel="noopener">この製品をオンプレミスで導入する（商品ページ）</a></p><?php endif; ?>
 </body>
 </html>
